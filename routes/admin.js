@@ -124,6 +124,78 @@ router.post('/reset-votes', (req, res) => {
   res.json({ success: true, message: 'All votes and registered voters have been reset.' });
 });
 
+// GET /api/admin/eligible-voters?q=... - list registered eligible numbers (optionally filtered)
+router.get('/eligible-voters', (req, res) => {
+  const q = (req.query.q || '').trim();
+  let rows;
+  if (q) {
+    rows = db.prepare('SELECT * FROM eligible_voters WHERE phone_number LIKE ? OR note LIKE ? ORDER BY added_at DESC')
+      .all(`%${q}%`, `%${q}%`);
+  } else {
+    rows = db.prepare('SELECT * FROM eligible_voters ORDER BY added_at DESC LIMIT 500').all();
+  }
+  const total = db.prepare('SELECT COUNT(*) AS count FROM eligible_voters').get().count;
+  res.json({ total, voters: rows });
+});
+
+// POST /api/admin/eligible-voters - bulk add numbers.
+// Body: { numbers: "one per line, or comma/space separated" }
+router.post('/eligible-voters', (req, res) => {
+  const { numbers } = req.body;
+  if (typeof numbers !== 'string' || !numbers.trim()) {
+    return res.status(400).json({ error: 'Please paste at least one phone number.' });
+  }
+
+  // Split on newlines, commas, or whitespace, then validate/normalize each.
+  const rawList = numbers.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  const valid = [];
+  const invalid = [];
+
+  rawList.forEach(raw => {
+    const cleaned = raw.replace(/[\s\-()]/g, '');
+    if (/^\+?\d{7,15}$/.test(cleaned)) {
+      valid.push(cleaned);
+    } else {
+      invalid.push(raw);
+    }
+  });
+
+  const insert = db.prepare('INSERT OR IGNORE INTO eligible_voters (phone_number) VALUES (?)');
+  const insertMany = db.transaction((list) => {
+    let added = 0;
+    list.forEach(num => { added += insert.run(num).changes; });
+    return added;
+  });
+
+  const added = insertMany(valid);
+  const duplicates = valid.length - added;
+
+  res.status(201).json({
+    success: true,
+    added,
+    duplicates,
+    invalidCount: invalid.length,
+    invalidSamples: invalid.slice(0, 10)
+  });
+});
+
+// DELETE /api/admin/eligible-voters/:phone - remove a single number from the allowlist
+router.delete('/eligible-voters/:phone', (req, res) => {
+  const info = db.prepare('DELETE FROM eligible_voters WHERE phone_number = ?').run(req.params.phone);
+  if (info.changes === 0) return res.status(404).json({ error: 'That phone number is not on the list.' });
+  res.json({ success: true });
+});
+
+// POST /api/admin/eligible-voters/clear - wipe the entire allowlist (type-to-confirm on the frontend)
+router.post('/eligible-voters/clear', (req, res) => {
+  const { confirm } = req.body;
+  if (confirm !== 'CLEAR') {
+    return res.status(400).json({ error: 'Confirmation phrase mismatch. Type CLEAR to confirm.' });
+  }
+  db.prepare('DELETE FROM eligible_voters').run();
+  res.json({ success: true });
+});
+
 // GET /api/admin/settings - fetch current event/branding/schedule settings
 router.get('/settings', (req, res) => {
   res.json(db.prepare('SELECT * FROM settings WHERE id = 1').get());
@@ -133,7 +205,8 @@ router.get('/settings', (req, res) => {
 router.put('/settings', (req, res) => {
   const {
     event_name, event_description, event_date, logo_url,
-    primary_color, voting_enabled, voting_start, voting_end
+    primary_color, voting_enabled, voting_start, voting_end,
+    restrict_to_eligible_voters
   } = req.body;
 
   const current = db.prepare('SELECT * FROM settings WHERE id = 1').get();
@@ -141,7 +214,8 @@ router.put('/settings', (req, res) => {
   db.prepare(`
     UPDATE settings SET
       event_name = ?, event_description = ?, event_date = ?, logo_url = ?,
-      primary_color = ?, voting_enabled = ?, voting_start = ?, voting_end = ?
+      primary_color = ?, voting_enabled = ?, voting_start = ?, voting_end = ?,
+      restrict_to_eligible_voters = ?
     WHERE id = 1
   `).run(
     sanitizeText(event_name ?? current.event_name),
@@ -151,7 +225,8 @@ router.put('/settings', (req, res) => {
     /^#[0-9A-Fa-f]{6}$/.test(primary_color || '') ? primary_color : current.primary_color,
     voting_enabled !== undefined ? (voting_enabled ? 1 : 0) : current.voting_enabled,
     voting_start !== undefined ? voting_start : current.voting_start,
-    voting_end !== undefined ? voting_end : current.voting_end
+    voting_end !== undefined ? voting_end : current.voting_end,
+    restrict_to_eligible_voters !== undefined ? (restrict_to_eligible_voters ? 1 : 0) : current.restrict_to_eligible_voters
   );
 
   res.json(db.prepare('SELECT * FROM settings WHERE id = 1').get());

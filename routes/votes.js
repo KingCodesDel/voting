@@ -71,6 +71,16 @@ router.post('/', voteLimiter, (req, res) => {
 
   const normalizedPhone = normalizePhoneNumber(phone);
 
+  // If the admin has restricted voting to a pre-approved list of phone
+  // numbers, reject anyone not on that list before touching the votes
+  // table at all.
+  if (settings.restrict_to_eligible_voters) {
+    const eligible = db.prepare('SELECT phone_number FROM eligible_voters WHERE phone_number = ?').get(normalizedPhone);
+    if (!eligible) {
+      return res.status(403).json({ error: 'This phone number is not registered for voting in this event.' });
+    }
+  }
+
   const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(category_id);
   if (!category) return res.status(400).json({ error: 'Category does not exist.' });
 

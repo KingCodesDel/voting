@@ -27,6 +27,7 @@ Includes a public voting site (with phone-number verification, one vote per cate
 - CSV export (aggregated results, and a full raw vote log with phone numbers + timestamps)
 - Reset all votes (type-to-confirm dialog)
 - Branding controls (event name/description/date, logo, primary color)
+- Optional allowlist: restrict voting to a pre-approved list of phone numbers you upload (e.g. ticket holders), leaving it off allows anyone to vote
 
 **Security**
 - Prepared SQL statements everywhere (via `better-sqlite3`) — no string-built queries

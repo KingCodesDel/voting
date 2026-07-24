@@ -61,10 +61,22 @@ CREATE TABLE IF NOT EXISTS settings (
     primary_color TEXT NOT NULL DEFAULT '#6366f1',
     voting_enabled INTEGER NOT NULL DEFAULT 1,
     voting_start TEXT DEFAULT NULL,
-    voting_end TEXT DEFAULT NULL
+    voting_end TEXT DEFAULT NULL,
+    -- When enabled, only phone numbers present in eligible_voters may vote.
+    -- Off by default so existing events are unaffected.
+    restrict_to_eligible_voters INTEGER NOT NULL DEFAULT 0
 );
 
 INSERT OR IGNORE INTO settings (id) VALUES (1);
+
+-- Optional allowlist of phone numbers permitted to vote, used only when
+-- settings.restrict_to_eligible_voters = 1. Populated by the admin
+-- (e.g. from a list of ticket holders or registered attendees).
+CREATE TABLE IF NOT EXISTS eligible_voters (
+    phone_number TEXT PRIMARY KEY,
+    note TEXT DEFAULT '',
+    added_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
 CREATE INDEX IF NOT EXISTS idx_nominees_category ON nominees(category_id);
 CREATE INDEX IF NOT EXISTS idx_votes_category ON votes(category_id);

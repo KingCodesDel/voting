@@ -22,6 +22,7 @@
     wireNomineeForm();
     wireResultsToolbar();
     wireSettingsForm();
+    wireAllowlist();
     wireConfirmModal();
     wireNomineeSearch();
     wireMenuToggle();
@@ -81,6 +82,7 @@
 
         if (tab === 'results') refreshResults();
         if (tab === 'voters') refreshVoters();
+        if (tab === 'allowlist') refreshAllowlist();
       });
     });
   }
@@ -410,6 +412,101 @@
     } catch (e) { toast(e.message, 'error'); }
   }
 
+  // ---------------- Allowed Numbers (eligible-voter allowlist) ----------------
+  async function refreshAllowlist(query) {
+    const tbody = el('allowlistTableBody');
+    try {
+      const url = query ? `/api/admin/eligible-voters?q=${encodeURIComponent(query)}` : '/api/admin/eligible-voters';
+      const data = await apiFetch(url);
+      el('allowlistTotal').textContent = data.total;
+
+      if (data.voters.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3">No numbers added yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.voters.map(v => `
+        <tr>
+          <td>${escapeHtml(v.phone_number)}</td>
+          <td>${escapeHtml((v.added_at || '').replace('T', ' ').slice(0, 16))}</td>
+          <td class="actions-row">
+            <button class="icon-btn danger" data-remove-number="${escapeHtml(v.phone_number)}">🗑️ Remove</button>
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('[data-remove-number]').forEach(btn =>
+        btn.addEventListener('click', () => removeAllowlistNumber(btn.dataset.removeNumber)));
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+
+    // Keep the restriction toggle in sync with the saved setting.
+    try {
+      const s = await apiFetch('/api/admin/settings');
+      el('allowlistEnabledToggle').checked = !!s.restrict_to_eligible_voters;
+    } catch (e) {}
+  }
+
+  async function removeAllowlistNumber(phone) {
+    showConfirm({
+      title: 'Remove This Number?',
+      message: `"${phone}" will no longer be allowed to vote if the restriction is enabled.`,
+      onConfirm: async () => {
+        await apiFetch(`/api/admin/eligible-voters/${encodeURIComponent(phone)}`, { method: 'DELETE' });
+        toast('Number removed.', 'success');
+        await refreshAllowlist();
+      }
+    });
+  }
+
+  function wireAllowlist() {
+    el('allowlistAddBtn').addEventListener('click', async () => {
+      const numbers = el('allowlistBulkInput').value.trim();
+      if (!numbers) return toast('Paste at least one phone number first.', 'error');
+      try {
+        const result = await apiFetch('/api/admin/eligible-voters', { method: 'POST', body: { numbers } });
+        el('allowlistAddResult').textContent =
+          `Added ${result.added} new number(s)` +
+          (result.duplicates ? `, ${result.duplicates} already on the list` : '') +
+          (result.invalidCount ? `, ${result.invalidCount} skipped (invalid format)` : '') + '.';
+        el('allowlistBulkInput').value = '';
+        await refreshAllowlist();
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+
+    let debounceTimer;
+    el('allowlistSearch').addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => refreshAllowlist(e.target.value.trim()), 300);
+    });
+
+    el('allowlistClearBtn').addEventListener('click', () => {
+      showConfirm({
+        title: 'Clear the Entire Allowlist?',
+        message: 'This removes every pre-approved phone number. If the restriction is still enabled, nobody will be able to vote until you add numbers again.',
+        requireResetPhrase: true,
+        confirmPhrase: 'CLEAR',
+        onConfirm: async (extra) => {
+          await apiFetch('/api/admin/eligible-voters/clear', { method: 'POST', body: { confirm: extra } });
+          toast('Allowlist cleared.', 'success');
+          await refreshAllowlist();
+        }
+      });
+    });
+
+    el('allowlistEnabledToggle').addEventListener('change', async (e) => {
+      try {
+        await apiFetch('/api/admin/settings', { method: 'PUT', body: { restrict_to_eligible_voters: e.target.checked } });
+        toast(e.target.checked ? 'Voting is now restricted to the allowlist.' : 'Restriction turned off — anyone can vote again.', 'success');
+      } catch (err) {
+        e.target.checked = !e.target.checked; // revert on failure
+        toast(err.message, 'error');
+      }
+    });
+  }
+
   // ---------------- Settings ----------------
   async function refreshSettings() {
     const s = await apiFetch('/api/admin/settings');
@@ -447,14 +544,17 @@
 
   // ---------------- Confirmation modal ----------------
   let confirmCallback = null;
-  function showConfirm({ title, message, onConfirm, requireResetPhrase }) {
+  function showConfirm({ title, message, onConfirm, requireResetPhrase, confirmPhrase }) {
+    const phrase = confirmPhrase || 'RESET';
     el('confirmTitle').textContent = title;
     el('confirmMessage').textContent = message;
     el('confirmExtraField').style.display = requireResetPhrase ? 'block' : 'none';
+    el('confirmPhraseLabel').textContent = `Type ${phrase} to confirm`;
     el('confirmResetInput').value = '';
     confirmCallback = onConfirm;
     el('confirmModal').classList.add('open');
     el('confirmModal').dataset.requirePhrase = requireResetPhrase ? '1' : '0';
+    el('confirmModal').dataset.phrase = phrase;
   }
 
   function wireConfirmModal() {
@@ -462,9 +562,10 @@
     el('confirmModal').addEventListener('click', (e) => { if (e.target.id === 'confirmModal') el('confirmModal').classList.remove('open'); });
     el('confirmOkBtn').addEventListener('click', async () => {
       const requirePhrase = el('confirmModal').dataset.requirePhrase === '1';
+      const expectedPhrase = el('confirmModal').dataset.phrase || 'RESET';
       const extra = requirePhrase ? el('confirmResetInput').value.trim() : undefined;
-      if (requirePhrase && extra !== 'RESET') {
-        toast('Please type RESET exactly to confirm.', 'error');
+      if (requirePhrase && extra !== expectedPhrase) {
+        toast(`Please type ${expectedPhrase} exactly to confirm.`, 'error');
         return;
       }
       try {

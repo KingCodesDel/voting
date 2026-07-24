@@ -19,6 +19,7 @@
       <a href="#" class="tab-link" data-tab="nominees">🧑‍🤝‍🧑 Nominees</a>
       <a href="#" class="tab-link" data-tab="results">📈 Results</a>
       <a href="#" class="tab-link" data-tab="voters">📱 Voters</a>
+      <a href="#" class="tab-link" data-tab="allowlist">✅ Allowed Numbers</a>
       <a href="#" class="tab-link" data-tab="settings">⚙️ Settings</a>
     </nav>
     <div class="sidebar-footer">
@@ -128,6 +129,42 @@
       </div>
     </section>
 
+    <!-- ===================== ALLOWED NUMBERS (eligible-voter allowlist) ===================== -->
+    <section class="tab-panel" id="tab-allowlist">
+      <div class="card">
+        <h2>Restrict Voting to Pre-Approved Numbers</h2>
+        <p style="color:var(--text-muted); margin-top:-8px;">
+          When enabled, only phone numbers on the list below will be allowed to vote — anyone else is rejected, even with a validly formatted number. Leave this off if anyone should be able to vote.
+        </p>
+        <div class="switch-row">
+          <input type="checkbox" id="allowlistEnabledToggle" style="width:20px;height:20px;">
+          <label for="allowlistEnabledToggle" style="margin:0;">Restrict voting to numbers on this list</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Add Numbers</h2>
+        <p style="color:var(--text-muted); margin-top:-8px;">Paste one phone number per line (or separated by commas).</p>
+        <div class="field">
+          <textarea id="allowlistBulkInput" placeholder="+15551234567&#10;+15559876543&#10;+15550001111" style="min-height:120px;"></textarea>
+        </div>
+        <button class="btn btn-primary" id="allowlistAddBtn">Add Numbers</button>
+        <div id="allowlistAddResult" style="margin-top:10px; font-size:0.9rem; color:var(--text-muted);"></div>
+      </div>
+
+      <div class="toolbar">
+        <input type="search" id="allowlistSearch" placeholder="Search allowed numbers...">
+        <span style="color:var(--text-muted);">Total: <strong id="allowlistTotal">0</strong></span>
+        <button class="btn btn-danger" id="allowlistClearBtn" style="margin-left:auto;">🗑️ Clear All</button>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Phone Number</th><th>Added</th><th>Actions</th></tr></thead>
+          <tbody id="allowlistTableBody"><tr><td colspan="3">No numbers added yet.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- ===================== SETTINGS ===================== -->
     <section class="tab-panel" id="tab-settings">
       <div class="card">
@@ -165,7 +202,7 @@
     <h3 id="confirmTitle">Are you sure?</h3>
     <p id="confirmMessage" style="color:var(--text-muted);"></p>
     <div id="confirmExtraField" style="display:none;">
-      <div class="field"><label>Type RESET to confirm</label><input type="text" id="confirmResetInput"></div>
+      <div class="field"><label id="confirmPhraseLabel">Type RESET to confirm</label><input type="text" id="confirmResetInput"></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-outline" id="confirmCancelBtn" style="flex:1;">Cancel</button>
