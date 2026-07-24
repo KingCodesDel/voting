@@ -1,45 +1,37 @@
-# fly.toml — Fly.io deployment config for the Awards Voting Platform
+# fly.toml app configuration file generated for voting26 on 2026-07-24T11:48:21Z
 #
-# Before first deploy:
-#   1. fly launch --no-deploy   (generates an app name/region, skip if you
-#                                already ran `fly launch` once)
-#   2. fly volumes create voting_data --size 1
-#   3. fly secrets set SESSION_SECRET=... CSRF_SECRET=... ADMIN_USERNAME=... ADMIN_PASSWORD=...
-#   4. fly deploy
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
-# `app` below will be overwritten with your actual app name by `fly launch`.
 
-app = "awards-voting-platform"
-primary_region = "iad"
+app = 'voting26'
+primary_region = 'iad'
 
 [build]
 
 [env]
-  NODE_ENV = "production"
-  PORT = "3000"
-  # Both the SQLite DB and uploaded nominee photos live on the mounted
-  # volume below, so they survive deploys/restarts.
-  DB_PATH = "/data/voting.db"
-  UPLOAD_DIR = "/data/uploads"
+  DB_PATH = '/data/voting.db'
+  NODE_ENV = 'production'
+  PORT = '3000'
+  UPLOAD_DIR = '/data/uploads'
 
-[mounts]
-  source = "voting_data"
-  destination = "/data"
+[[mounts]]
+  source = 'voting_data'
+  destination = '/data'
 
 [http_service]
-  internal_port = 3000
+  internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
   [[http_service.checks]]
-    grace_period = "10s"
-    interval = "30s"
-    method = "GET"
-    timeout = "5s"
-    path = "/api/settings"
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
+    method = 'GET'
+    path = '/api/settings'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"
+  size = 'shared-cpu-1x'
+  memory = '512mb'
