@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vote — Awards</title>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <div class="brand">
+      <img id="brandLogo" src="/images/default-logo.svg" alt="Logo" onerror="this.style.display='none'">
+      <span id="brandName">Awards Night</span>
+    </div>
+    <div class="nav-links">
+      <a href="/index.html"><span class="label">Home</span></a>
+      <a href="/awards.html" class="active"><span class="label">Awards</span></a>
+      <button class="theme-toggle" title="Toggle dark/light mode">🌙</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" style="padding: 40px 20px; border-radius: 0 0 24px 24px;">
+  <h1 style="font-size: 1.8rem;">Cast Your Vote</h1>
+  <p id="votingStatusMsg">Choose a nominee in each category below.</p>
+</header>
+
+<section class="section container">
+  <div id="categoriesContainer">
+    <!-- Skeleton loaders while fetching -->
+    <div class="skeleton" style="height:220px;margin-bottom:24px;"></div>
+    <div class="skeleton" style="height:220px;margin-bottom:24px;"></div>
+  </div>
+</section>
+
+<footer>&copy; <span id="year"></span> Awards Voting Platform. All rights reserved.</footer>
+
+<!-- Phone verification / vote confirmation modal -->
+<div class="modal-overlay" id="voteModal">
+  <div class="modal modal-wrapper">
+    <button class="modal-close" id="closeModalBtn" aria-label="Close">&times;</button>
+
+    <div id="modalStepPhone">
+      <h3>Verify Your Phone Number</h3>
+      <p style="color:var(--text-muted); font-size:0.9rem; margin-top:-8px;">
+        You'll vote for <strong id="modalNomineeName"></strong> in <strong id="modalCategoryName"></strong>.
+      </p>
+      <div class="field">
+        <label for="phoneInput">Phone Number</label>
+        <input type="tel" id="phoneInput" placeholder="+1 555 123 4567" autocomplete="tel">
+      </div>
+      <div class="error-msg" id="phoneError"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" id="cancelVoteBtn" style="flex:1;">Cancel</button>
+        <button class="btn btn-primary" id="submitVoteBtn" style="flex:1;">
+          <span id="submitVoteLabel">Confirm Vote</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="modalStepSuccess" style="display:none; text-align:center;">
+      <div style="font-size:3rem; margin-bottom:10px;">🎉</div>
+      <h3>Vote Recorded!</h3>
+      <p id="successMessage" style="color: var(--text-muted);"></p>
+      <button class="btn btn-primary btn-full" id="closeSuccessBtn" style="margin-top:16px;">Done</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/main.js"></script>
+<script src="/js/awards.js"></script>
+</body>
+</html>

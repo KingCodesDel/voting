@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log*
+.env
+.git
+.gitignore
+database/*.db
+database/*.db-shm
+database/*.db-wal
+public/uploads/*
+!public/uploads/.gitkeep
+*.zip
+README.md

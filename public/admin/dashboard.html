@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Awards Platform</title>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+<div class="admin-body">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">🏆 <span>Admin Panel</span></div>
+    <nav>
+      <a href="#" class="tab-link active" data-tab="overview">📊 Overview</a>
+      <a href="#" class="tab-link" data-tab="categories">🗂️ Categories</a>
+      <a href="#" class="tab-link" data-tab="nominees">🧑‍🤝‍🧑 Nominees</a>
+      <a href="#" class="tab-link" data-tab="results">📈 Results</a>
+      <a href="#" class="tab-link" data-tab="voters">📱 Voters</a>
+      <a href="#" class="tab-link" data-tab="settings">⚙️ Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" style="width:100%; border-radius:10px;">🌙 Toggle Theme</button>
+      <button id="logoutBtn" style="margin-top:8px;width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);background:none;cursor:pointer;color:var(--danger);font-weight:600;">Log Out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <h1 id="pageTitle">Overview</h1>
+      </div>
+      <div style="color:var(--text-muted);">Signed in as <strong id="adminUsername">—</strong></div>
+    </div>
+
+    <!-- ===================== OVERVIEW ===================== -->
+    <section class="tab-panel active" id="tab-overview">
+      <div class="stats-grid">
+        <div class="stat-card"><span class="stat-icon">🗳️</span><div class="stat-label">Total Votes</div><div class="stat-value" id="statTotalVotes">0</div></div>
+        <div class="stat-card"><span class="stat-icon">📱</span><div class="stat-label">Registered Phone Numbers</div><div class="stat-value" id="statTotalVoters">0</div></div>
+        <div class="stat-card"><span class="stat-icon">🗂️</span><div class="stat-label">Categories</div><div class="stat-value" id="statTotalCategories">0</div></div>
+        <div class="stat-card"><span class="stat-icon">🧑‍🤝‍🧑</span><div class="stat-label">Nominees</div><div class="stat-value" id="statTotalNominees">0</div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card"><h2>Votes Over Time</h2><canvas id="votesOverTimeChart" height="220"></canvas></div>
+        <div class="chart-card"><h2>Votes by Category</h2><canvas id="votesByCategoryChart" height="220"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ===================== CATEGORIES ===================== -->
+    <section class="tab-panel" id="tab-categories">
+      <div class="card">
+        <h2 id="categoryFormTitle">Add New Category</h2>
+        <form id="categoryForm">
+          <input type="hidden" id="categoryId">
+          <div class="form-grid">
+            <div class="field"><label>Name</label><input type="text" id="categoryName" required maxlength="150"></div>
+            <div class="field"><label>Display Order</label><input type="number" id="categoryOrder" value="0"></div>
+          </div>
+          <div class="field"><label>Description</label><textarea id="categoryDescription" maxlength="500"></textarea></div>
+          <div style="display:flex; gap:10px;">
+            <button type="submit" class="btn btn-primary" id="categorySubmitBtn">Add Category</button>
+            <button type="button" class="btn btn-outline" id="categoryCancelBtn" style="display:none;">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Name</th><th>Description</th><th>Nominees</th><th>Order</th><th>Actions</th></tr></thead>
+          <tbody id="categoriesTableBody"><tr><td colspan="5">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== NOMINEES ===================== -->
+    <section class="tab-panel" id="tab-nominees">
+      <div class="card">
+        <h2 id="nomineeFormTitle">Add New Nominee</h2>
+        <form id="nomineeForm">
+          <input type="hidden" id="nomineeId">
+          <div class="form-grid">
+            <div class="field">
+              <label>Category</label>
+              <select id="nomineeCategory" required></select>
+            </div>
+            <div class="field"><label>Name</label><input type="text" id="nomineeName" required maxlength="150"></div>
+            <div class="field"><label>Display Order</label><input type="number" id="nomineeOrder" value="0"></div>
+            <div class="field"><label>Photo</label><input type="file" id="nomineePhoto" accept="image/*"></div>
+          </div>
+          <div class="field"><label>Bio</label><textarea id="nomineeBio" maxlength="500"></textarea></div>
+          <div style="display:flex; gap:10px;">
+            <button type="submit" class="btn btn-primary" id="nomineeSubmitBtn">Add Nominee</button>
+            <button type="button" class="btn btn-outline" id="nomineeCancelBtn" style="display:none;">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+      <div class="toolbar">
+        <input type="search" id="nomineeSearch" placeholder="Search nominees by name...">
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Photo</th><th>Name</th><th>Category</th><th>Votes</th><th>Actions</th></tr></thead>
+          <tbody id="nomineesTableBody"><tr><td colspan="5">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== RESULTS ===================== -->
+    <section class="tab-panel" id="tab-results">
+      <div class="toolbar">
+        <button class="btn btn-outline" id="exportResultsBtn">⬇️ Export Results (CSV)</button>
+        <button class="btn btn-outline" id="exportVotesLogBtn">⬇️ Export Vote Log (CSV)</button>
+        <button class="btn btn-danger" id="resetVotesBtn" style="margin-left:auto;">🗑️ Reset All Votes</button>
+      </div>
+      <div id="resultsContainer"><p>Loading results...</p></div>
+    </section>
+
+    <!-- ===================== VOTERS ===================== -->
+    <section class="tab-panel" id="tab-voters">
+      <div class="stats-grid">
+        <div class="stat-card"><span class="stat-icon">📱</span><div class="stat-label">Total Registered Phone Numbers</div><div class="stat-value" id="votersCount">0</div></div>
+      </div>
+      <div class="card">
+        <p style="color:var(--text-muted); margin:0;">For privacy, individual phone numbers are only available via the exportable vote log (Results tab), which includes the phone number, category, nominee, and timestamp for every vote cast.</p>
+      </div>
+    </section>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <section class="tab-panel" id="tab-settings">
+      <div class="card">
+        <h2>Event & Branding</h2>
+        <form id="settingsForm">
+          <div class="form-grid">
+            <div class="field"><label>Event Name</label><input type="text" id="settingEventName" maxlength="150"></div>
+            <div class="field"><label>Event Date</label><input type="date" id="settingEventDate"></div>
+            <div class="field"><label>Logo URL</label><input type="text" id="settingLogoUrl" placeholder="/images/logo.png"></div>
+            <div class="field"><label>Primary Color</label><input type="color" id="settingPrimaryColor"></div>
+          </div>
+          <div class="field"><label>Event Description</label><textarea id="settingEventDescription" maxlength="500"></textarea></div>
+
+          <hr style="border-color:var(--border); margin: 20px 0;">
+          <h2 style="font-size:1.05rem;">Voting Controls</h2>
+          <div class="switch-row" style="margin-bottom:16px;">
+            <input type="checkbox" id="settingVotingEnabled" style="width:20px;height:20px;">
+            <label for="settingVotingEnabled" style="margin:0;">Voting Enabled</label>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label>Voting Start (optional)</label><input type="datetime-local" id="settingVotingStart"></div>
+            <div class="field"><label>Voting End (optional)</label><input type="datetime-local" id="settingVotingEnd"></div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Confirmation dialog for destructive actions -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmMessage" style="color:var(--text-muted);"></p>
+    <div id="confirmExtraField" style="display:none;">
+      <div class="field"><label>Type RESET to confirm</label><input type="text" id="confirmResetInput"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="confirmCancelBtn" style="flex:1;">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn" style="flex:1;">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>

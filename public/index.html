@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Awards Voting Platform</title>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <div class="brand">
+      <img id="brandLogo" src="/images/default-logo.svg" alt="Logo" onerror="this.style.display='none'">
+      <span id="brandName">Awards Night</span>
+    </div>
+    <div class="nav-links">
+      <a href="/index.html" class="active"><span class="label">Home</span></a>
+      <a href="/awards.html"><span class="label">Awards</span></a>
+      <button class="theme-toggle" title="Toggle dark/light mode">🌙</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <h1 id="eventName">Annual Awards Night</h1>
+  <p id="eventDescription">Vote for your favorite nominees across every category. One vote per phone number, per category — make it count!</p>
+  <div class="countdown" id="countdown" style="display:none;">
+    <div class="unit"><span class="num" id="cd-days">--</span><span class="label">Days</span></div>
+    <div class="unit"><span class="num" id="cd-hours">--</span><span class="label">Hours</span></div>
+    <div class="unit"><span class="num" id="cd-mins">--</span><span class="label">Mins</span></div>
+    <div class="unit"><span class="num" id="cd-secs">--</span><span class="label">Secs</span></div>
+  </div>
+  <div>
+    <a href="/awards.html" class="btn btn-primary">Vote Now →</a>
+  </div>
+</header>
+
+<section class="section container">
+  <h2 class="section-title">How Voting Works</h2>
+  <p class="section-subtitle">Simple, secure, and fair for everyone.</p>
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="icon">📱</div>
+      <h3>Verify Your Phone</h3>
+      <p>Enter your phone number to verify you're a unique voter before casting a vote.</p>
+    </div>
+    <div class="info-card">
+      <div class="icon">🏆</div>
+      <h3>Pick Your Favorite</h3>
+      <p>Browse each award category and choose the nominee you want to win.</p>
+    </div>
+    <div class="info-card">
+      <div class="icon">🔒</div>
+      <h3>One Vote, Locked In</h3>
+      <p>Each phone number can vote once per category — no take-backs, no duplicates.</p>
+    </div>
+    <div class="info-card">
+      <div class="icon">📊</div>
+      <h3>Live Results</h3>
+      <p>Results are tallied securely and published by the event organizers.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  &copy; <span id="year"></span> Awards Voting Platform. All rights reserved.
+</footer>
+
+<script src="/js/main.js"></script>
+<script src="/js/home.js"></script>
+</body>
+</html>

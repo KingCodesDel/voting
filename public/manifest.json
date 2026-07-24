@@ -1,0 +1,16 @@
+{
+  "name": "Awards Voting Platform",
+  "short_name": "AwardsVote",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#6366f1",
+  "description": "Vote for your favorite nominees in the annual awards event.",
+  "icons": [
+    {
+      "src": "/images/default-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
