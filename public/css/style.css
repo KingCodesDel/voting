@@ -206,6 +206,10 @@ img { max-width: 100%; display: block; }
 /* Nominee grid: horizontal scroll (side-scrolling carousel) */
 .nominee-grid {
   display: flex;
+  flex-wrap: nowrap;        /* force a single row — this is what makes it scroll sideways instead of stacking */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;              /* prevents flex children from forcing the container to grow instead of scroll */
   gap: 20px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -230,6 +234,8 @@ img { max-width: 100%; display: block; }
   display: flex;
   flex-direction: column;
   flex: 0 0 230px;         /* fixed width so cards sit side by side */
+  width: 230px;             /* explicit width as a backup to flex-basis */
+  max-width: 230px;
   scroll-snap-align: start; /* snaps each card into view while scrolling */
 }
 .nominee-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
@@ -378,5 +384,5 @@ footer {
   .nav-links span.label { display: none; }
   .hero { padding: 52px 16px; }
   .section { padding: 40px 16px; }
-  .nominee-card { flex-basis: 200px; }
+  .nominee-card { flex-basis: 200px; width: 200px; max-width: 200px; }
 }
