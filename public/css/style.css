@@ -204,9 +204,17 @@ img { max-width: 100%; display: block; }
 .badge-closed { background: rgba(220,38,38,0.12); color: var(--danger); }
 
 .nominee-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  display: flex;
+  overflow-x: auto;
   gap: 20px;
+  padding-bottom: 12px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nominee-grid .nominee-card {
+  flex: 0 0 230px;
+  scroll-snap-align: start;
 }
 
 .nominee-card {
