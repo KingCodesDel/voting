@@ -92,11 +92,32 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
   box-shadow: var(--shadow);
+  /* horizontal scroll container for mobile / narrow viewports */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+.table-wrapper::-webkit-scrollbar { height: 8px; }
+.table-wrapper::-webkit-scrollbar-track { background: transparent; }
+.table-wrapper::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+.table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+table {
+  width: 100%;
+  min-width: 560px; /* keeps columns readable instead of squishing; triggers scroll on narrow screens */
+  border-collapse: collapse;
+}
+th, td {
+  padding: 13px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.92rem;
+  white-space: nowrap; /* prevents column text from wrapping/collapsing, forces clean side-scroll */
+}
+td.wrap, th.wrap { white-space: normal; } /* opt back into wrapping for a specific column if needed */
 th { color: var(--text-muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; background: var(--bg); }
 tr:last-child td { border-bottom: none; }
 td img.thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
@@ -187,4 +208,9 @@ td img.thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover;
     font-size: 1.1rem;
   }
   .admin-main { padding: 20px 16px; }
+}
+
+@media (max-width: 640px) {
+  table { min-width: 480px; }
+  th, td { padding: 11px 12px; font-size: 0.86rem; }
 }

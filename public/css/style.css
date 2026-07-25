@@ -203,19 +203,22 @@ img { max-width: 100%; display: block; }
 .badge-voted { background: rgba(22,163,74,0.14); color: var(--success); }
 .badge-closed { background: rgba(220,38,38,0.12); color: var(--danger); }
 
+/* Nominee grid: horizontal scroll (side-scrolling carousel) */
 .nominee-grid {
   display: flex;
-  overflow-x: auto;
   gap: 20px;
-  padding-bottom: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 12px; /* room so the scrollbar doesn't clip card shadows */
   scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: touch; /* smooth momentum scroll on iOS */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--border) transparent;
 }
-
-.nominee-grid .nominee-card {
-  flex: 0 0 230px;
-  scroll-snap-align: start;
-}
+.nominee-grid::-webkit-scrollbar { height: 8px; }
+.nominee-grid::-webkit-scrollbar-track { background: transparent; }
+.nominee-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+.nominee-grid::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
 .nominee-card {
   background: var(--surface);
@@ -226,6 +229,8 @@ img { max-width: 100%; display: block; }
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   display: flex;
   flex-direction: column;
+  flex: 0 0 230px;         /* fixed width so cards sit side by side */
+  scroll-snap-align: start; /* snaps each card into view while scrolling */
 }
 .nominee-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
 .nominee-card.selected { border-color: var(--primary); }
@@ -373,4 +378,5 @@ footer {
   .nav-links span.label { display: none; }
   .hero { padding: 52px 16px; }
   .section { padding: 40px 16px; }
+  .nominee-card { flex-basis: 200px; }
 }
