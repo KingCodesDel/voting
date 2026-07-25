@@ -1,40 +1,48 @@
 // routes/auth.js
 // Admin login / logout / session-check endpoints.
+//
+// Rewritten to use PostgreSQL (async/await + parameterized $1 query)
+// instead of the original synchronous better-sqlite3 call.
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { db } = require('../database/db');
+const { query } = require('../database/db');
 const { loginLimiter } = require('../middleware/rateLimiter');
 const { isNonEmptyString } = require('../middleware/validators');
 
 const router = express.Router();
 
 // POST /api/auth/login
-router.post('/login', loginLimiter, (req, res) => {
-  const { username, password } = req.body;
+router.post('/login', loginLimiter, async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
 
-  if (!isNonEmptyString(username, 100) || !isNonEmptyString(password, 200)) {
-    return res.status(400).json({ error: 'Username and password are required.' });
-  }
+    if (!isNonEmptyString(username, 100) || !isNonEmptyString(password, 200)) {
+      return res.status(400).json({ error: 'Username and password are required.' });
+    }
 
-  const admin = db.prepare('SELECT * FROM admin_users WHERE username = ?').get(username.trim());
+    const admin = (await query(
+      'SELECT * FROM admin_users WHERE username = $1',
+      [username.trim()]
+    )).rows[0];
 
-  // Always run bcrypt.compare even if admin not found, to reduce timing
-  // side-channels that reveal valid usernames.
-  const hashToCheck = admin ? admin.password_hash : '$2a$12$invalidsaltinvalidsaltinvalidsaltuO';
-  const isValid = bcrypt.compareSync(password, hashToCheck);
+    // Always run bcrypt.compare even if admin not found, to reduce timing
+    // side-channels that reveal valid usernames.
+    const hashToCheck = admin ? admin.password_hash : '$2a$12$invalidsaltinvalidsaltinvalidsaltuO';
+    const isValid = bcrypt.compareSync(password, hashToCheck);
 
-  if (!admin || !isValid) {
-    return res.status(401).json({ error: 'Invalid username or password.' });
-  }
+    if (!admin || !isValid) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
 
-  // Regenerate the session on login to prevent session fixation attacks.
-  req.session.regenerate((err) => {
-    if (err) return res.status(500).json({ error: 'Login failed. Please try again.' });
-    req.session.adminId = admin.id;
-    req.session.username = admin.username;
-    res.json({ success: true, username: admin.username });
-  });
+    // Regenerate the session on login to prevent session fixation attacks.
+    req.session.regenerate((err) => {
+      if (err) return res.status(500).json({ error: 'Login failed. Please try again.' });
+      req.session.adminId = admin.id;
+      req.session.username = admin.username;
+      res.json({ success: true, username: admin.username });
+    });
+  } catch (err) { next(err); }
 });
 
 // POST /api/auth/logout

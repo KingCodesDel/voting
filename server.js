@@ -1,6 +1,15 @@
 // server.js
 // Entry point: sets up security middleware, sessions, CSRF protection,
 // static file serving, and mounts all API routes.
+//
+// Changes from the original:
+//  1. Database: now calls the async initSchema() from the new Postgres
+//     db.js (was the old synchronous initDatabase()).
+//  2. Sessions: now stored in Postgres via connect-pg-simple instead of
+//     the default in-memory MemoryStore, so admin logins survive
+//     restarts/redeploys instead of being wiped every time.
+//  3. The one direct db.prepare(...) call (public /api/settings) is now
+//     an async query(...) call.
 
 require('dotenv').config();
 const path = require('path');
@@ -9,12 +18,11 @@ const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 const { doubleCsrf } = require('csrf-csrf');
 
-const { db, initDatabase } = require('./database/db');
+const { pool, query, initSchema } = require('./database/db');
 const { apiLimiter } = require('./middleware/rateLimiter');
-
-initDatabase();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,7 +49,15 @@ app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(cookieParser());
 
 // ---- Sessions (used for admin auth) ----
+// Backed by Postgres (table auto-created as "session" on first run) so
+// admin logins survive service restarts, redeploys, and scaling events —
+// instead of the default MemoryStore, which loses all sessions on restart.
 app.use(session({
+  store: new pgSession({
+    pool,
+    tableName: 'session',
+    createTableIfMissing: true
+  }),
   name: 'awards.sid',
   secret: process.env.SESSION_SECRET || 'dev_only_change_me',
   resave: false,
@@ -84,9 +100,11 @@ app.use('/api/', apiLimiter);
 
 // Public settings endpoint (branding info needed by the public site,
 // deliberately separate from the protected /api/admin/settings routes)
-app.get('/api/settings', (req, res) => {
-  const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
-  res.json(settings);
+app.get('/api/settings', async (req, res, next) => {
+  try {
+    const result = await query('SELECT * FROM settings WHERE id = 1');
+    res.json(result.rows[0]);
+  } catch (err) { next(err); }
 });
 
 // ---- Routes ----
@@ -123,7 +141,16 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'An unexpected server error occurred.' });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🏆 Awards Voting Platform running at http://localhost:${PORT}`);
-  console.log(`   Admin panel: http://localhost:${PORT}/admin\n`);
-});
+// Schema init is async now (runs SQL against Postgres), so we wait for it
+// before accepting traffic.
+initSchema()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`\n🏆 Awards Voting Platform running at http://localhost:${PORT}`);
+      console.log(`   Admin panel: http://localhost:${PORT}/admin\n`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to initialize database schema:', err);
+    process.exit(1);
+  });

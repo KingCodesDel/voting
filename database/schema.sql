@@ -1,53 +1,54 @@
 -- ============================================================
--- Awards Voting Platform - Database Schema (SQLite)
+-- Awards Voting Platform - Database Schema (PostgreSQL)
+-- Converted from the original SQLite schema.
 -- ============================================================
 
 -- Admin users who can log into the dashboard
 CREATE TABLE IF NOT EXISTS admin_users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Award categories (e.g. "Best Actor", "Best Song")
 CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT DEFAULT '',
     display_order INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Nominees, each belonging to one category
 CREATE TABLE IF NOT EXISTS nominees (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     bio TEXT DEFAULT '',
     photo_url TEXT DEFAULT '',
     display_order INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Registered voter phone numbers (uniqueness enforced globally)
 CREATE TABLE IF NOT EXISTS voters (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     phone_number TEXT NOT NULL UNIQUE,
-    first_seen_at TEXT NOT NULL DEFAULT (datetime('now'))
+    first_seen_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Votes cast. A voter may cast at most ONE vote PER CATEGORY
 -- (enforced by the UNIQUE(phone_number, category_id) constraint),
 -- and can never change that vote once cast.
 CREATE TABLE IF NOT EXISTS votes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     phone_number TEXT NOT NULL,
     category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
     nominee_id INTEGER NOT NULL REFERENCES nominees(id) ON DELETE CASCADE,
-    voted_at TEXT NOT NULL DEFAULT (datetime('now')),
+    voted_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(phone_number, category_id)
 );
 
@@ -67,7 +68,7 @@ CREATE TABLE IF NOT EXISTS settings (
     restrict_to_eligible_voters INTEGER NOT NULL DEFAULT 0
 );
 
-INSERT OR IGNORE INTO settings (id) VALUES (1);
+INSERT INTO settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
 -- Optional allowlist of phone numbers permitted to vote, used only when
 -- settings.restrict_to_eligible_voters = 1. Populated by the admin
@@ -75,7 +76,7 @@ INSERT OR IGNORE INTO settings (id) VALUES (1);
 CREATE TABLE IF NOT EXISTS eligible_voters (
     phone_number TEXT PRIMARY KEY,
     note TEXT DEFAULT '',
-    added_at TEXT NOT NULL DEFAULT (datetime('now'))
+    added_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_nominees_category ON nominees(category_id);
