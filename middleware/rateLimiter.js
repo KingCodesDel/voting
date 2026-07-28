@@ -25,7 +25,7 @@ const loginLimiter = rateLimit({
 // Strict limiter for the vote-casting endpoint.
 const voteLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 15,
+  max: 70,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many voting attempts from this connection. Please try again later.' }
